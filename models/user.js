@@ -18,7 +18,10 @@ const userSchema = new mongoose.Schema({
     type: [String],
     default: [],
   },
-  rooms: { type: mongoose.Schema.Types.ObjectId, ref: Room },
+  rooms: [{ type: mongoose.Schema.Types.ObjectId, ref: Room }],
+  userImage: {
+    type: String,
+  },
 });
 
 export default mongoose.model("User", userSchema);

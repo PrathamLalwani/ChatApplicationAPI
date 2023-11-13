@@ -29,10 +29,21 @@ app.use(
 );
 app.use(json({ limit: "5mb" }));
 
-io.on("connection", (socket) => {
+io.on("connection", async (socket) => {
   console.log("socket connected");
   connectedUsers++;
   const username = socket.handshake.query.username;
+
+  const rooms = await User.findOne({ username: username })
+    .select("rooms")
+    .populate("rooms");
+  if (rooms === null) {
+    console.log("no rooms found");
+  } else {
+    for (const room of rooms.rooms) {
+      socket.join(room.roomName);
+    }
+  }
 
   socket.on("send-message", (message) => {
     console.log(message);
@@ -56,12 +67,13 @@ io.on("connection", (socket) => {
       new groupMessage({
         message: message.message,
         sender: message.username,
-        groupName: message.conversationName,
+        roomName: message.conversationName,
         time: message.time,
       })
         .save()
         .then(() => {
           console.log("message added to group conversations");
+          socket.to(message.conversationName).emit("receive-message", message);
         })
         .catch((e) => {
           console.log(e);
@@ -99,7 +111,7 @@ app.use((req, res) => {
 
 mongoose
   .connect(
-    `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PASSWORD}@cluster0.j7xkveh.mongodb.net/?retryWrites=true&w=majority`
+    "mongodb+srv://pratham:newPassword@cluster0.j7xkveh.mongodb.net/?retryWrites=true&w=majority"
   )
   .then((res) => {
     console.log("mongo connected");
