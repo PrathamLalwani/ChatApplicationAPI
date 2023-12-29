@@ -1,19 +1,10 @@
 import mongoose from "mongoose";
 import Room from "./room.js";
-const privateConversation = new mongoose.Schema({
-  conversationId: { type: String, required: true },
-  conversationName: { type: String, required: true },
-  isPersonal: { type: Boolean, required: true },
-});
 
-const PrivateConversations = mongoose.model(
-  "private-conversation",
-  privateConversation
-);
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
-  email: { type: String, lowercase: true },
-  password: { type: String },
+  email: { type: String, required: true, lowercase: true },
+  password: { type: String, required: true },
   friends: {
     type: [String],
     default: [],

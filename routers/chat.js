@@ -7,11 +7,11 @@ import GroupMessage from "../models/groupMessage.js";
 export const chatRouter = express.Router();
 dotenv.config();
 
-chatRouter.get("/private-chat/:username", async (req, res) => {
-  const username = req.params.username;
-
+chatRouter.get("/private-chat/", async (req, res) => {
+  const username = req.query.username;
+  const token = req.query.token;
   const user = await User.findOne({ username: username }).catch((err) =>
-    console.log(err)
+    console.log(err),
   );
   if (user === null) {
     res.status(404).send("user doesn't exist");
@@ -49,10 +49,11 @@ chatRouter.get("/private-chat/:username", async (req, res) => {
   res.send(result);
 });
 
-chatRouter.get("/group-chat/:username", async (req, res) => {
-  const username = req.params.username;
+chatRouter.get("/group-chat/", async (req, res) => {
+  const username = req.query.username;
+  const token = req.query.token;
   const rooms = await Room.find({ roomMembers: username }).catch((err) =>
-    console.log(err)
+    console.log(err),
   );
   if (rooms === null) {
     res.send({});

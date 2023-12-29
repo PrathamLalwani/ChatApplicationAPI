@@ -24,16 +24,21 @@ dotenv.config();
 app.use(
   cors({
     origin: "*",
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: false,
-  })
+  }),
 );
 app.use(json({ limit: "5mb" }));
 
+const activeUsers = {};
 io.on("connection", async (socket) => {
   console.log("socket connected");
   connectedUsers++;
+  activeUsers[username] = socket.id;
+  //getting the username
   const username = socket.handshake.query.username;
-
+  //getting the rooms the user is a part of
   const rooms = await User.findOne({ username: username })
     .select("rooms")
     .populate("rooms");
@@ -44,7 +49,7 @@ io.on("connection", async (socket) => {
       socket.join(room.roomName);
     }
   }
-
+  //send message event
   socket.on("send-message", (message) => {
     console.log(message);
     if (message.isPersonal) {
@@ -57,6 +62,7 @@ io.on("connection", async (socket) => {
         .save()
         .then(() => {
           console.log("message added to private conversation successfully");
+          socket.to;
           socket.broadcast.emit("receive-message", message);
         })
         .catch((e) => {
@@ -84,6 +90,7 @@ io.on("connection", async (socket) => {
 
   socket.on("disconnect", () => {
     console.log("socket disconnected");
+    delete activeUsers[username];
     connectedUsers--;
   });
 
@@ -98,10 +105,10 @@ io.on("connection", async (socket) => {
 
 app.use(chatRouter);
 app.use(userRouter);
-app.get("/check-connection", (req, res) => {
+app.get("/check-connection", (_, res) => {
   res.status(200).send("succesfully connected");
 });
-app.post("/check-connection", (req, res) => {
+app.post("/check-connection", (_, res) => {
   res.status(200).send("succesfully connected");
 });
 
@@ -110,9 +117,7 @@ app.use((req, res) => {
 });
 
 mongoose
-  .connect(
-    "mongodb+srv://pratham:newPassword@cluster0.j7xkveh.mongodb.net/?retryWrites=true&w=majority"
-  )
+  .connect(process.env.DB_ADDRESS)
   .then((res) => {
     console.log("mongo connected");
 
@@ -120,7 +125,7 @@ mongoose
       console.log(
         `API is running on ${
           process.env.PORT
-        } port started on ${new Date().toDateString()} ${new Date().toLocaleTimeString()}`
+        } port started on ${new Date().toDateString()} ${new Date().toLocaleTimeString()}`,
       );
     });
   })
